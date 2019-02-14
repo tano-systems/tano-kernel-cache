@@ -1,0 +1,6 @@
+define KMACHINE beaglebone-black
+define KTYPE preempt-rt
+define KARCH arm
+
+include bsp/common-ti33x/ti33x_rt_release.scc
+include beaglebone-black.scc

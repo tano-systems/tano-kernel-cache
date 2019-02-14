@@ -1,0 +1,4 @@
+include arch/ti33x/ti33x.scc
+
+kconf non-hardware systemd.cfg
+kconf non-hardware debug_options.cfg

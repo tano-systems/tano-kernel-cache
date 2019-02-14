@@ -1,0 +1,8 @@
+kconf hardware multi_v7_defconfig.cfg
+kconf hardware multi_v7_prune.cfg
+kconf hardware baseport.cfg
+kconf hardware ipc.cfg
+kconf hardware connectivity.cfg
+kconf hardware audio_display.cfg
+kconf hardware omap_soc.cfg
+kconf hardware am33xx_only.cfg

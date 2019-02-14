@@ -1,0 +1,4 @@
+include arch/ti33x/ti33x.scc
+
+kconf non-hardware real_time.cfg
+kconf non-hardware systemd.cfg
