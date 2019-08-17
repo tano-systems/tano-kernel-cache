@@ -2,3 +2,5 @@ define KFEATURE_DESCRIPTION "Enable all options required for USB networking"
 define KFEATURE_COMPATIBILITY board
 
 kconf hardware usb-net.cfg
+
+include features/net/phylib.scc

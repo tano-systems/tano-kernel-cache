@@ -4,4 +4,4 @@ define KFEATURE_COMPATIBILITY board
 kconf hardware wifi-common.cfg
 
 include features/mac80211/mac80211.scc
-
+include features/net/phylib.scc
