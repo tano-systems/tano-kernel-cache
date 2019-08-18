@@ -1,1 +1,9 @@
 patch 550-loop-better-discard-for-block-devices.patch
+patch 600-netfilter_conntrack_flush.patch
+patch 610-netfilter_match_bypass_default_checks.patch
+patch 611-netfilter_match_bypass_default_table.patch
+patch 612-netfilter_match_reduce_memory_access.patch
+patch 613-netfilter_optional_tcp_window_check.patch
+patch 616-net_optimize_xfrm_calls.patch
+patch 620-net_sched-codel-do-not-defer-queue-length-update.patch
+patch 640-bridge-only-accept-EAP-locally.patch
