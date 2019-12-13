@@ -1,15 +1,6 @@
-From: Felix Fietkau <nbd@nbd.name>
-Subject: netfilter: add support for flushing conntrack via /proc
-
-lede-commit 8193bbe59a74d34d6a26d4a8cb857b1952905314
-Signed-off-by: Felix Fietkau <nbd@nbd.name>
----
- net/netfilter/nf_conntrack_standalone.c | 59 ++++++++++++++++++++++++++++++++-
- 1 file changed, 58 insertions(+), 1 deletion(-)
-
 --- a/net/netfilter/nf_conntrack_standalone.c
 +++ b/net/netfilter/nf_conntrack_standalone.c
-@@ -9,6 +9,7 @@
+@@ -17,6 +17,7 @@
  #include <linux/percpu.h>
  #include <linux/netdevice.h>
  #include <linux/security.h>
@@ -17,8 +8,8 @@ Signed-off-by: Felix Fietkau <nbd@nbd.name>
  #include <net/net_namespace.h>
  #ifdef CONFIG_SYSCTL
  #include <linux/sysctl.h>
-@@ -433,6 +434,56 @@ static int ct_cpu_seq_show(struct seq_fi
- 	return 0;
+@@ -262,10 +263,66 @@ static int ct_open(struct inode *inode,
+ 			sizeof(struct ct_iter_state));
  }
  
 +struct kill_request {
@@ -44,11 +35,13 @@ Signed-off-by: Felix Fietkau <nbd@nbd.name>
 +	        nf_inet_addr_cmp(&kr->addr, &t2->dst.u3));
 +}
 +
-+static int ct_file_write(struct file *file, char *buf, size_t count)
++static ssize_t ct_file_write(struct file *file, const char __user *buf,
++			     size_t count, loff_t *ppos)
 +{
 +	struct seq_file *seq = file->private_data;
 +	struct net *net = seq_file_net(seq);
 +	struct kill_request kr = { };
++	char req[INET6_ADDRSTRLEN] = { };
 +
 +	if (count == 0)
 +		return 0;
@@ -56,33 +49,38 @@ Signed-off-by: Felix Fietkau <nbd@nbd.name>
 +	if (count >= INET6_ADDRSTRLEN)
 +		count = INET6_ADDRSTRLEN - 1;
 +
-+	if (strnchr(buf, count, ':')) {
++	if (copy_from_user(req, buf, count))
++		return -EFAULT;
++
++	if (strnchr(req, count, ':')) {
 +		kr.family = AF_INET6;
-+		if (!in6_pton(buf, count, (void *)&kr.addr, '\n', NULL))
++		if (!in6_pton(req, count, (void *)&kr.addr, '\n', NULL))
 +			return -EINVAL;
-+	} else if (strnchr(buf, count, '.')) {
++	} else if (strnchr(req, count, '.')) {
 +		kr.family = AF_INET;
-+		if (!in4_pton(buf, count, (void *)&kr.addr, '\n', NULL))
++		if (!in4_pton(req, count, (void *)&kr.addr, '\n', NULL))
 +			return -EINVAL;
 +	}
 +
-+	nf_ct_iterate_cleanup_net(net, kill_matching, &kr, 0, 0);
++	nf_ct_iterate_cleanup(net, kill_matching, &kr, 0, 0);
 +
-+	return 0;
++	return count;
 +}
 +
- static const struct seq_operations ct_cpu_seq_ops = {
- 	.start	= ct_cpu_seq_start,
- 	.next	= ct_cpu_seq_next,
-@@ -446,8 +497,9 @@ static int nf_conntrack_standalone_init_
- 	kuid_t root_uid;
- 	kgid_t root_gid;
+ static const struct file_operations ct_file_ops = {
+ 	.owner   = THIS_MODULE,
+ 	.open    = ct_open,
+ 	.read    = seq_read,
++	.write	 = ct_file_write,
+ 	.llseek  = seq_lseek,
+ 	.release = seq_release_net,
+ };
+@@ -367,7 +424,7 @@ static int nf_conntrack_standalone_init_
+ {
+ 	struct proc_dir_entry *pde;
  
--	pde = proc_create_net("nf_conntrack", 0440, net->proc_net, &ct_seq_ops,
--			sizeof(struct ct_iter_state));
-+	pde = proc_create_net_data_write("nf_conntrack", 0440, net->proc_net,
-+					 &ct_seq_ops, &ct_file_write,
-+					 sizeof(struct ct_iter_state), NULL);
+-	pde = proc_create("nf_conntrack", 0440, net->proc_net, &ct_file_ops);
++	pde = proc_create("nf_conntrack", 0660, net->proc_net, &ct_file_ops);
  	if (!pde)
  		goto out_nf_conntrack;
  
